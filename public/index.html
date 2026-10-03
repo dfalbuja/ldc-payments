@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LDC Antonio Ante · Mensualidades</title>
+  <link rel="stylesheet" href="estilos.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="cabecera">
+    <div>
+      <h1>Liga Deportiva Cantonal Antonio Ante</h1>
+      <p>Mensualidades y control de morosidad · prototipo
+        <span class="motor pg">PostgreSQL</span> + <span class="motor mongo">MongoDB</span></p>
+    </div>
+    <span id="salud" class="salud">Conectando…</span>
+  </header>
+
+  <nav class="pestanas">
+    <button type="button" data-pestana="matricula">1 · Matrícula</button>
+    <button type="button" data-pestana="pagos">2 · Pagos</button>
+    <button type="button" data-pestana="cuenta">3 · Estado de cuenta</button>
+    <button type="button" data-pestana="mora">4 · Mora</button>
+  </nav>
+
+  <main>
+    <!-- R1 -->
+    <section id="matricula" class="panel">
+      <div class="panel-cabecera">
+        <h2>Matricular alumno</h2>
+        <span class="motor pg">PostgreSQL</span>
+      </div>
+      <p class="nota">Al matricular se inserta la matrícula y genera las mensualidades del periodo restante en una
+        sola transacción. Se bloquea el curso al validar cupo, edad y periodo.</p>
+      <form id="form-matricula" class="formulario">
+        <label>Alumno <select name="id_alumno" required></select></label>
+        <label>Curso <select name="id_curso" required></select></label>
+        <label>Fecha de matrícula <input type="date" name="fecha" required></label>
+        <button type="submit">Matricular</button>
+      </form>
+      <div id="resultado-matricula"></div>
+      <h3>Cursos del periodo</h3>
+      <div id="tabla-cursos"></div>
+    </section>
+
+    <!-- R2 + R5 -->
+    <section id="pagos" class="panel">
+      <div class="panel-cabecera">
+        <h2>Registrar pago</h2>
+        <span class="motor pg">PostgreSQL</span><span class="motor mongo">MongoDB</span>
+      </div>
+      <p class="nota">1. Guarda el pago y su desglose en PostgreSQL bloqueando el saldo de cada
+        mensualidad. 2. Después del COMMIT, el comprobante se guarda en MongoDB y el pago pasa a <em>confirmado</em>.
+        Si MongoDB lo rechaza, el pago queda <em>pendiente de comprobante</em>.</p>
+      <form id="form-pago" class="formulario apilado">
+        <label>Representante <select name="id_representante" required></select></label>
+        <div id="pago-mensualidades"></div>
+        <p class="total">Total del pago <strong id="pago-total">$0.00</strong></p>
+        <label>Método de pago <select name="id_metodo_pago" required></select></label>
+        <fieldset id="campos-comprobante"></fieldset>
+        <button type="submit">Registrar pago</button>
+      </form>
+      <div id="resultado-pago"></div>
+
+      <div class="panel-cabecera separado">
+        <h3>Buscar comprobante de transferencia por n.º de referencia bancaria</h3>
+        <span class="motor mongo">MongoDB</span>
+      </div>
+      <p class="nota"> Es el número de referencia que entrega el banco y que se
+        ingresó al registrar un pago por transferencia (<code>datos.num_referencia</code>). No es el <code>_id</code> de
+        MongoDB ni el número de pago. Los pagos con tarjeta o efectivo no tienen número de referencia.</p>
+      <form id="form-referencia" class="formulario">
+        <label>N.º de referencia de la transferencia <input name="referencia" required></label>
+        <button type="submit" class="secundario">Buscar</button>
+      </form>
+      <div id="resultado-referencia"></div>
+    </section>
+
+    <!-- R3 -->
+    <section id="cuenta" class="panel">
+      <div class="panel-cabecera">
+        <h2>Estado de cuenta</h2>
+        <span class="motor pg">PostgreSQL</span>
+      </div>
+      <p class="nota">Todo sale de la vista <code>v_saldo_mensualidad</code>, la misma que usa el reporte de morosos: el saldo
+        tiene una sola fuente de verdad y refleja al instante el último pago.</p>
+      <form class="formulario">
+        <label>Representante <select id="cuenta-representante"></select></label>
+      </form>
+      <div id="resultado-cuenta"></div>
+      <div id="detalle-pago-cuenta"></div>
+    </section>
+
+    <!-- R4 + R6 + R7 -->
+    <section id="mora" class="panel">
+      <div class="panel-cabecera">
+        <h2>Representantes en mora</h2>
+        <span class="motor pg">PostgreSQL</span><span class="motor mongo">MongoDB</span>
+      </div>
+      <p class="nota">La deuda vencida se calcula en PostgreSQL. El último aviso de cada representante
+        se lee de MongoDB (<code>notificaciones_mora</code>).</p>
+      <div id="tabla-morosos"></div>
+
+      <div class="panel-cabecera separado">
+        <h3>Proceso programado de mora</h3>
+        <span class="motor mongo">MongoDB</span>
+      </div>
+      <p class="nota">Antes de avisar revisa el historial (R7). Es la <em>misma mora</em> mientras alguna mensualidad del último
+        aviso siga impaga: entonces escala a nivel 2 a los 7 días y a nivel 3 a los 14, una sola vez cada uno. Si ya pagó
+        todo lo notificado, la deuda vencida es nueva y vuelve al nivel 1. El índice único <code>ux_episodio_nivel</code>
+        impide duplicados. La fecha permite simular que el proceso corre otro día.</p>
+      <form id="form-mora" class="formulario">
+        <label>Fecha de ejecución <input type="date" name="fecha" required></label>
+        <button type="submit">Ejecutar proceso de mora</button>
+      </form>
+      <div id="resultado-mora"></div>
+
+      <div class="panel-cabecera separado">
+        <h3>Notificaciones registradas</h3>
+        <span class="motor mongo">MongoDB</span>
+      </div>
+      <div id="tabla-notificaciones"></div>
+      <div id="detalle-notificacion"></div>
+    </section>
+  </main>
+</body>
+</html>
