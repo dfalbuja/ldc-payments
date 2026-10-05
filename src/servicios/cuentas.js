@@ -48,7 +48,7 @@ export async function estadoCuentaRepresentante(id) {
   };
 }
 
-// R4 + R7 · La mora sale de PostgreSQL; el último aviso de cada
+// La mora sale de PostgreSQL; el último aviso de cada
 // representante sale de MongoDB. La respuesta combina ambos motores.
 export async function listarMorosos() {
   const { rows: morosos } = await pool.query('SELECT * FROM v_morosos ORDER BY deuda_vencida DESC, nombres');

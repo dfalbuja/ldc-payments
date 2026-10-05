@@ -106,9 +106,9 @@
         <h3>Proceso programado de mora</h3>
         <span class="motor mongo">MongoDB</span>
       </div>
-      <p class="nota">Antes de avisar revisa el historial (R7). Es la <em>misma mora</em> mientras alguna mensualidad del último
+      <p class="nota">Antes de avisar revisa el historial. Es la <em>misma mora</em> mientras alguna mensualidad del último
         aviso siga impaga: entonces escala a nivel 2 a los 7 días y a nivel 3 a los 14, una sola vez cada uno. Si ya pagó
-        todo lo notificado, la deuda vencida es nueva y vuelve al nivel 1. El índice único <code>ux_episodio_nivel</code>
+        todo lo notificado, la deuda vencida es nueva y vuelve al nivel 1. El índice único
         impide duplicados. La fecha permite simular que el proceso corre otro día.</p>
       <form id="form-mora" class="formulario">
         <label>Fecha de ejecución <input type="date" name="fecha" required></label>
